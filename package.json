@@ -1,0 +1,23 @@
+{
+    "name": "ETransit",
+    "version": "0.0.1",
+    "description": "ETransit",
+    "contributors": [
+        {
+            "name": "badplum",
+            "email": "ibadplum@gmail.com"
+        }
+    ],
+    "dependencies": {},
+    "author": "ibadplum@gmail.com",
+    "repository": {
+        "type" : "git",
+        "url" : "https://github.com/badplum/ETransit"
+    },
+    "main": "./main.js",
+    "keywords": [
+        "transit",
+        "CSS transition"
+    ],
+    "homepage": "https://github.com/badplum/ETransit"
+}
