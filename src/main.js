@@ -321,7 +321,7 @@ define(
             var style = {};
             var targetStyle = window.getComputedStyle(elem);
             var transform;
-            var line = this.transitProperty;
+            var line = this.line.queue[this.line.queue.length - 1];
             var offset;
             var currentOffset;
             this.pauseStyle = util.clone(this.elem.style);
@@ -332,7 +332,7 @@ define(
             this.status.pause = true;
             this._position += pauseTime - startTime;
 
-            for (var name in line) {
+            for (var name in line.properties) {
                 var prop = line[name];
                 if (isTransformProperty(name)) {
                     if (name === 'x' || name === 'y' || name === 'z') {
@@ -348,10 +348,10 @@ define(
                             easingFunc = bezier.apply(null, this._currentEasing);  
                             var progress = this.getProgress();                      
                             valueProgress = easingFunc(progress);
-                        }
-                        beginValue = parseFloat(this.transitProperty[name].start);
-                        endValue = parseFloat(this.transitProperty[name].end);
-                        current = ((endValue - beginValue) * valueProgress) + beginValue;                    
+                        }n
+                        beginValue = parseFloat(line.propertyData[name].begin);
+                        endValue = parseFloat(line.propertyData[name].end);
+                        current = ((endValue - begiValue) * valueProgress) + beginValue;                    
                         style[name] = current;
                     }
                 }
