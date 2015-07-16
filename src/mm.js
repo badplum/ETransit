@@ -8,7 +8,7 @@
  */
 define(
     function (require) {
-        var eTransit = {};
+        var ETransit = {};
         var util = require('./util');
         var map = require('./map');
         var css = require('./css');
@@ -47,7 +47,7 @@ define(
             return this;
         }
         
-        eTransit.to = function (elem, properties, duration, easing, callback) {
+        ETransit.to = function (elem, properties, duration, easing, callback) {
             var transitObj = new TransitObject(elem);
             transitObj.transit(properties, duration, easing, callback);
         };
@@ -166,61 +166,25 @@ define(
                 pause: false
             };
             this.oldTransitions = util.clone(elem.style);
-            this.line = {
-                step: -1,
-                queue:[]
-            };
-            this.delay = 0;
-            this.isOver = false; 
         }
 
         /**
          * 恢复初始状态
-         * 恢复包括所有动画过程中，用别的方法额外设置的style
          * @param  {Function} callback 完成后的回掉函数
          * @return {Object} this
          */
-        TransitObject.prototype.restoreAllStyle = function (callback) {
+        TransitObject.prototype.restore = function (callback) {
             var me = this;
             var run = function (nextFn) {
-                me.run();
+                me.run({}, 1, 'transform 100ms linear');
                 me.bindCallback(1, nextFn, callback);
                 me.elem.style.cssText = me.oldTransitions.cssText;
-                //me.elem.offsetWidth; // force a repaint
+                me.elem.offsetWidth; // force a repaint
             };
             me.deferredRun(run);
             return me;
         };
 
-        /**
-         * 恢复初始状态
-         * 仅恢复ETransit改变的值
-         * @param  {Function} callback 完成后的回掉函数
-         * @return {Object} this
-         */
-        TransitObject.prototype.restore = function (callback, isNow) {
-            var me = this;
-            var run = function (nextFn) {
-                me.reverse(-1, callback, 'restore');
-            };
-            if (isNow) {
-                run();
-            }
-            else {
-                me.queneRun(run);
-            }
-            return me;
-        };
-
-        /**
-         * 恢复初始状态
-         * 仅恢复ETransit改变的值
-         * @param  {Function} callback 完成后的回掉函数
-         * @return {Object} this
-         */
-        TransitObject.prototype.restoreNow = function (callback) {
-            this.restore(callback, true);
-        }
         /**
          * 进入队列并按照队列顺序执行
          * @param  {Function} fn 待执行的函数
@@ -228,6 +192,7 @@ define(
         TransitObject.prototype.deferredRun = function (fn) {
             var element = this.elem;
             var deferredRun = function (nextFn) {
+                element.offsetWidth; // force a repaint
                 fn(nextFn);
             };
             this.queneRun(deferredRun);
@@ -239,60 +204,28 @@ define(
          * @param  {=string|number} duration 持续时间
          * @param  {Object} arguments 上次变换的参数
          */
-        TransitObject.prototype.run = function (type) {
+        TransitObject.prototype.run = function (lastTransitionValue, duration, arguments) {
             this._position = 0;
             this._getRealEasing(this.lastArguments.easing);
-            this._prepare(this.properties, this.easing, type);
-            this.timeLine = {
-                startTime: + new Date(),
-                restTime: this.duration
-            };
-            this.line.step++;
+            this.lastTransition = arguments || this.lastTransition;
+            this.lastStyle = util.clone(this.elem.style);
+            this.lastDuration = parseInt(duration, 10) || this.lastDuration;
+            this.lastTransitionValue = lastTransitionValue || this.lastTransitionValue;
         };
 
         /**
-         * 循环
-         * @param  {number} times 循环次数。
-         * @param  {number} step 需要循环的步骤个数，从最后一次开始倒数，默认为全部，为-1。
+         * 对最后一步进行循环
+         * @param  {number} times 循环次数，包含已经执行的一次。为1的时候，不进行额外的动作。
          * @return {Object} this
          */
-        TransitObject.prototype.loop = function (times, step) {
+        TransitObject.prototype.loop = function (times) {
             var me = this;
-            times = parseInt(times, 10) || 2;
-            step = parseInt(step, 10) || -1;
-            var loopLine = {
-                isReady: false,
-                reverseStep: step,
-                forwardStep: 0,
-                times: 1,
-                queue: []
+            var run = function () {
+                me.reverse().transit.apply(me, me.lastTransition);
             };
-
-            function run () {
-                if (!loopLine.isReady) {
-                    step = step === -1 ? step = me.line.queue.length : step;
-                    loopLine.reverseStep = step;
-                    loopLine.isReady = true;
-                }
-                if (loopLine.reverseStep > 0) {
-                    loopLine.reverseStep--;
-                    loopLine.queue.push(me.line.queue[me.line.queue.length - 1]);
-                    me.reverse(1, run, 'loop');
-                }
-                else if (loopLine.forwardStep < step) {
-                    loopLine.forwardStep++;
-                    var data = loopLine.queue.pop();
-                    me.transit(data.properties, {duration: data.duration, delay: data.delay},
-                        data.easing, run, 'loop');
-                }
-                else if (loopLine.times < times){
-                    loopLine.times++;
-                    loopLine.reverseStep = step;
-                    loopLine.forwardStep = 0;
-                    run();
-                }
+            for (;times > 1; times--) {
+                me._deferredRun(run);
             }
-            me.queneRun(run);
             return me;
         };
         
@@ -391,11 +324,14 @@ define(
             var elem = this.elem;
             var lastArguments = this.lastArguments;
             var lastCssText = this.pauseStyle.cssText;
+            this.elem.offsetWidth;
+            var lastDuration = this.lastDuration;
             var easing = this._getRealEasing(lastArguments.easing);
 
             this.elem.style.cssText = lastCssText.replace(/\d+ms/g, this.timeLine.restTime + 'ms')
                 .replace(/cubic\-bezier\(.*?\)/g, 'cubic-bezier(' + easing.join(',') + ')');
-            this.offsetWidth;
+
+            this.elem.offsetWidth;
             this.status.pause = false;
             this.timeLine.resumeStartTime = +new Date();
             return this;
@@ -542,8 +478,7 @@ define(
                 return [propertyNames[name], style[propertyNames[name]]];
             }
             name = name.substr(0, 1).toUpperCase() + name.substr(1);
-            var prefixes = ['webkit', 'moz', 'ms', 'o'];
-            var fullName;
+            var prefixes = ['webkit', 'moz', 'ms', 'o'], fullName;
             for (var i = 0, end = prefixes.length; i < end; i++)
             {
                 fullName = prefixes[i] + name;
@@ -557,54 +492,23 @@ define(
         }
 
         /**
-         * 反转
+         * 反转。
          * 按照上一步的时间和easing对动画进行反转
-         * @param {Function} callback 回掉
-         * @param {number} step 回退的指令个数
-         * @param {string} type 可以扩展的各种类型。而且只要有值都不用queue来。
+         * @param  {Function} callback 回掉
          * @return {Object} this
          */
-        TransitObject.prototype.reverse = function (step, callback, type) {
+        TransitObject.prototype.reverse = function (callback) {
             var me = this;
             var element = me.elem;
-            step = parseInt(step, 10) || 1;
-            var i = 0;
-            var realDuration = type === 'restore' ? 1 : undefined;
             var run = function (nextFn) {
-                if (step === -1) {
-                    step = me.line.queue.length;
-                }
-                if (i < step) {
-                    i++;
-                    var action = me.line.queue[me.line.queue.length - 1];
-                    var properties = {};
-                    var lastProperties = action.propertyData;
-                    for (var name in lastProperties) {
-                        properties[name] = lastProperties[name]['begin'];
-                    }
-                    var duration = {
-                        duration: action.duration,
-                        delay: action.delay
-                    };
-                    var easing = action.easing;
-                    var fn = function () {
-                        // 把line里最后两个干掉。
-                        me.line.queue = me.line.queue.slice(0, -2);
-                        run(nextFn);
-                    }
-                    me.transit(properties, realDuration || duration.duration, easing, fn, 'reverse');
-                }
-                else {
-                    callback && callback();
-                    nextFn && nextFn();
-                }
+                var lastCssText = me.lastStyle.cssText;
+                var lastDuration = me.lastDuration;
+                me.run();
+                me.bindCallback(lastDuration, nextFn, callback);
+                // me.elem.style.cssText = lastCssText + map.support.transition + ':' + me.lastTransitionValue;
+                me.elem.style.cssText = 'transition: transform 10000ms linear; -webkit-transition: transform 10000ms linear;';
             };
-            if (type) {
-                run();
-            }
-            else {
-                me.queneRun(run);
-            }
+            me.deferredRun(run);
             return me;
         };
 
@@ -638,12 +542,7 @@ define(
             if ((duration > 0) && (transitionEnd) && (option.useTransitionEnd)) {
                 // Use the 'transitionend' event if it's available.
                 bound = true;
-                setTimeout(
-                    function () {
-                        util.on(element, transitionEnd, cb);
-                    },
-                    1
-                );
+                util.on(element, transitionEnd, cb);
             }
             else {
                 // Fallback to timers if the 'transitionend' event isn't supported.
@@ -652,76 +551,15 @@ define(
         };
 
         /**
-         * 初始化相关工作
-         * @param  {Object} properties 待变换的属性
-         * @param  {string} easing esasing
-         * @param  {string} type action类型
+         * 执行队列函数
+         * @param  {Function} fn 待执行的函数
          */
-        TransitObject.prototype._prepare = function (properties, easing, type) {
-            var propertyData = {};
-            for (var name in properties) {
-                if (properties.hasOwnProperty(name)) {
-                    var value = properties[name];
-                    propertyData[name] = {
-                        begin: null, 
-                        end: value,
-                        easing: easing, 
-                        isTransform: isTransformProperty(name)
-                    };
-                }
+        TransitObject.prototype._deferredRun = function (fn) {
+            var deferredRun = function (next) {
+                fn();
+                next();
             }
-            this._getCurrentValues(this.elem, properties, propertyData);
-            var data = {
-                delay: util.toMS(this.delay),
-                duration: util.toMS(this.duration),
-                easing: this.easing,
-                propertyData: propertyData,
-                properties: properties,
-                type: type
-            };
-            this.line.queue.push(data);
-        }
-
-        /**
-         * 计算当前的各种属性
-         * @param  {Object} target 元素
-         * @param  {Object} properties 当前要撸的各种属性
-         * @param  {Object} data 存属性的对象
-         * @param  {Boolen} useStyle 是不是需要即时机选
-         */
-        TransitObject.prototype._getCurrentValues = function(target, properties, data, useStyle) {
-            var style = useStyle? target.style : window.getComputedStyle(target);
-            var value;
-            var property;
-            for (var name in properties) {
-                if (properties[name].isTransform) {
-                    value = this._getTransformValue(target, name);
-                }
-                else {
-                    property = getProperty(style, name);
-                    if (property[0] != name) {                    
-                        data[property[0]] = data[name];
-                        delete data[name];
-                        name = property[0]; 
-                    }
-                    value = property[1];
-                }
-                data[name]['begin'] = value;
-            }
-        }
-
-        /**
-         * Fetch transform property value directly from Transit
-         *
-         */  
-        this._getTransformValue = function(target, name) {
-            if (name.indexOf('scale') === 0) {
-                name = 'scale';
-            }
-            else if (name.indexOf('rotate') === 0) {
-                name = 'rotate';
-            }
-            return util.style(target, name); 
+            this.queneRun(deferredRun);
         };
 
         /**
@@ -734,49 +572,52 @@ define(
          * @return {Object} this
          */
         TransitObject.prototype.transit = function (properties, duration, easing, callback, type) {
+            var element = this.elem;
             var delay = 0;
+            var theseProperties = util.clone(properties);
+            var lastTransition = arguments;
+            var lastTransit = util.clone(this.transitProperty) || {};
+            if (!type || type === 'now') {
+                this.lastArguments = {
+                    properties: properties,
+                    duration: duration,
+                    easing: easing,
+                    callback: callback
+                };
+                this.timeLine = {
+                    startTime: + new Date(),
+                    restTime: duration,
+                    resume: {}
+                };
+                this.transitProperty = {};
+
+                for (var name in properties) {
+                    var start = lastTransit[name] || 0;
+                    this.transitProperty[name] = {
+                        end: properties[name],
+                        duration: duration,
+                        easing: easing,
+                        start: start
+                    }
+                }
+            }
+            else {
+                this.timeLine[type]['startTime'] = + new Date();
+            }
+
+            // Set defaults.(`400` duration, `ease` easing)
             if (typeof duration === 'undefined') {
                 duration = option.speeds._default;
-            }
-            if (typeof duration === 'object') {
-                var delay = util.toMS(duration.delay) || '0ms';
-                duration = util.toMS(duration.duration) || '0ms';
             }
             if (typeof easing === 'undefined' || !easing) {
                 easing = map.cssEase._default;
             }
 
-            type = type || 'transit';
-            this.duration = duration;
-            this.delay = delay;
-            this.easing = easing;
-            this.properties = properties;
-
-            var theseProperties = util.clone(properties);
-            var lastTransit = util.clone(this.transitProperty) || {};
-            var element = this.elem;
-
-            this.lastArguments = {
-                properties: properties,
-                duration: duration,
-                easing: easing,
-                callback: callback
-            };
-            
-            this.transitProperty = {};
-
-            for (var name in properties) {
-                var start = lastTransit[name] || 0;
-                this.transitProperty[name] = {
-                    end: properties[name],
-                    duration: duration,
-                    easing: easing,
-                    start: start
-                }
-            }
+            duration = util.toMS(duration);
 
             // 获取需要执行的CSS，例如'transform 400ms ease'
             var transitionValue = getTransition(properties, duration, easing, delay);
+            this.lastTransitionValue = transitionValue;
             var work = option.enabled && map.support.transition;
             var i = work ? (parseInt(duration, 10) + parseInt(delay, 10)) : 0;
 
@@ -798,7 +639,7 @@ define(
             var me = this;
             var run = function (nextFn) {
                 var bound = false;
-                me.run(type);
+                me.run(null, duration, lastTransition);
 
                 // callback
                 var cb = function () {
@@ -806,7 +647,7 @@ define(
                         util.un(element, transitionEnd, cb);
                     }
 
-                    if (i > 0 && !nextFn) {
+                    if (i > 0) {
                         element.style[map.support.transition] = null;
                     }
 
@@ -821,15 +662,10 @@ define(
                 // 支持'transitionend'用这个，不支持用setTimeout
                 if ((i > 0) && (transitionEnd) && (option.useTransitionEnd)) {
                     bound = true;
-                    setTimeout(
-                        function () {
-                            util.on(element, transitionEnd, cb);
-                        },
-                        1
-                    );
+                    util.on(element, transitionEnd, cb);
                 }
                 else {
-                    window.setTimeout(cb, i);
+                    window.setTimeout(cb, time);
                 }
 
                 if (i > 0) {
@@ -841,9 +677,10 @@ define(
             // Defer running. This allows the browser to paint any pending CSS it hasn't
             // painted yet before doing the transitions.
             var deferredRun = function (next) {
+                element.offsetWidth; // force a repaint
                 run(next);
             };
-            if (type !== 'transit') {
+            if (type === 'now') {
                 deferredRun();
             }
             else {
@@ -889,11 +726,11 @@ define(
          * @param  {string|Object} elem 指定的元素
          * @return {Object} TransitObject
          */
-        eTransit.get = function (elem) {
+        ETransit.get = function (elem) {
             elem = util.dom.get(elem);
             return new TransitObject(elem);
         };
 
-        return eTransit;
+        return ETransit;
     }
 );

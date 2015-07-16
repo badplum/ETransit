@@ -3,9 +3,28 @@
         <meta charset="utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
         <title>CSS Transitions Control :: Tweene :: JavaScript Animation Proxy</title>
-        
+        <style>
+            .green {
+                width:100px;
+                height:100px;
+                background:green
+            }
+            .btn {
+                width: 100px;
+                height: 20px;
+                border: 1px solid red;
+                display: inline-block;
+                margin-right: 20px;
+            }
+            #control {
+                margin-top: 20px;
+                margin-left: 20px;
+                margin-bottom: 20px;
+            }
+        </style>
         <meta name="viewport" content="width=device-width">
         <script type="text/javascript" src="js/require.js"></script>
+        <script type="text/javascript" src="js/jq.js"></script>
         <script>
         require.config({
             baseUrl: '../src',
@@ -14,15 +33,56 @@
         </script>
     </head>
     <body>
-        <div id="green" style="width:100px;height:100px;background:green"></div>
+        <div id="control">
+            <div id="play" class="btn">PLAY</div>
+            <div id="restore" class="btn">restore</div>
+            <div id="loop" class="btn">loop 2次</div>
+            <div id="pause" class="btn">pause</div>
+            <div id="resume" class="btn">resume</div>
+        </div>
+        <div id="green" class="green"></div>
         <div id="red" style="width:100px;height:100px;background:red"></div>
         <script type="text/javascript">
             require(['main'], function (transit) {
+                $(function() {
+                    var animation;
+                    $('#control div' ).on('click', function (event) {
+                        if (this.id === 'play') {
+                            animation && animation.restoreNow();
+                            animation = transit.get('green')
+                                .transit({ width: '200px', height:'200px'}, 2000, 'linear')
+                                .transit({ x: '300px', y:'100px'}, 2000, 'linear');
+                        }
+                        if (this.id === 'restore') {
+                            if (animation) {
+                                animation.restoreNow();
+                            }
+                            else {
+                                animation = transit.get('green')
+                                    .transit({ width: '200px', height:'200px'}, 2000, 'linear')
+                                    .transit({ x: '300px', y:'100px'}, 2000, 'linear').restore();
+                            }
+                        }
+                        if (this.id === 'loop') {
+                            animation && animation.restoreNow();
+                            animation = transit.get('green')
+                                .transit({ width: '200px', height:'200px'}, 2000, 'linear')
+                                .transit({ x: '300px', y:'100px'}, 2000, 'linear')
+                                .loop(2);
+                        }
+                        if (this.id === 'pause') {
+                            animation.pause();
+                        }
+                        if (this.id === 'resume') {
+                            animation.resume();
+                        }
+                    });
+                });
                 // transit.to('green', { filter: 'blur(10px)' }, 100000, 'linear');
                 // transit.get('green').transition({ x: '40px', y: '40px' }, 4000, 'linear', function (ele) {alert(2)}).transition({ x: '-40px', y: '-40px' }, 400, null, function (ele) {alert(3)});
                 // var obj = transit.get('green').transition({ x: '400px', y: '400px' }, 10000, 'easeInBack',function (ele) {
                 //     time = +new Date() - time;alert(time)});
-                transit.get('green').transition({ x: '400px', y: '400px' }, 1000, 'linear').reverse();
+                // transit.get('green').transit({ width: '200px', height:'200px'}, 2000, 'linear').transit({ x: '300px', y:'100px'}, 2000, 'linear').restore();
                 // setTimeout(function () {
                 //     time = +new Date();
                 //     obj.pause();
