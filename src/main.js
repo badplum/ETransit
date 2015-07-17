@@ -526,6 +526,8 @@ define(
             };
         }
 
+        var propertyNames = {};
+
         /**
          * 获取当前浏览器应该怎么写property
          * @param  {Object} style style
