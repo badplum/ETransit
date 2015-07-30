@@ -2,19 +2,16 @@
  * ETransit
  * Copyright 2015 Baidu Inc. All rights reserved.
  *
- * @ignore
  * @file 工具函数
  * @author ibadplum@gmail.com
  */
 define(
     function (require) {
         var map = require('./map');
-        var dataCache = {
-            uid: 0
-        };
         var util = {
             dom: {}
         };
+
         util.dom.get = function (elem) {
             if (!elem) {
                 return;
@@ -186,6 +183,11 @@ define(
             return typeof obj === 'object' || typeof obj === 'function'
                 ? class2type[toString.call(obj)] || 'object'
                 : typeof obj;
+        };
+
+        // 存放data
+        var dataCache = {
+            uid: 0 // 计数用
         };
 
         // 获取data

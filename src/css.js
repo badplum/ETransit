@@ -2,8 +2,7 @@
  * ETransit
  * Copyright 2015 Baidu Inc. All rights reserved.
  *
- * @ignore
- * @file css喜欢函数
+ * @file css相关函数
  * @author ibadplum@gmail.com
  */
 define(
@@ -40,7 +39,7 @@ define(
                     value = new Transform(value);
                 }
 
-                // 从jquery里拷来的
+                // 从jquery里看来的一个处理
                 // We've seen the 3D version of Scale() not work in Chrome when the
                 // element being scaled extends outside of the viewport.  Thus, we're
                 // forcing Chrome to not use the 3d transforms as well.  Not sure if
@@ -62,7 +61,6 @@ define(
         };
 
         // Transform class
-        // 从jquery里拷来的
         // This is the main class of a transformation property that powers
         // `$.fn.css({ transform: '...' })`.
         //
