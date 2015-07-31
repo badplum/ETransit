@@ -12,27 +12,28 @@ define(
         var css = {
             cssHooks: {},
             cssNumber: {
-                'columnCount': true,
-                'fillOpacity': true,
-                'flexGrow': true,
-                'flexShrink': true,
-                'fontWeight': true,
-                'lineHeight': true,
-                'opacity': true,
-                'order': true,
-                'orphans': true,
-                'widows': true,
-                'zIndex': true,
-                'zoom': true
+                columnCount: true,
+                fillOpacity: true,
+                flexGrow: true,
+                flexShrink: true,
+                fontWeight: true,
+                lineHeight: true,
+                opacity: true,
+                order: true,
+                orphans: true,
+                widows: true,
+                zIndex: true,
+                zoom: true
             }
         };
 
+        // cssHooks transit:transform
         css.cssHooks['transit:transform'] = {
-            get: function(elem) {
+            get: function (elem) {
                 return util.getData(elem, 'transform') || new Transform();
             },
 
-            set: function(elem, v) {
+            set: function (elem, v) {
                 var value = v;
 
                 if (!(value instanceof Transform)) {
@@ -56,33 +57,12 @@ define(
             }
         };
 
+        // cssHooks transform
         css.cssHooks.transform = {
             set: css.cssHooks['transit:transform'].set
         };
 
         // Transform class
-        // This is the main class of a transformation property that powers
-        // `$.fn.css({ transform: '...' })`.
-        //
-        // This is, in essence, a dictionary object with key/values as `-transform`
-        // properties.
-        //
-        //     var t = new Transform("rotate(90) scale(4)");
-        //
-        //     t.rotate             //=> "90deg"
-        //     t.scale              //=> "4,4"
-        //
-        // Setters are accounted for.
-        //
-        //     t.set('rotate', 4)
-        //     t.rotate             //=> "4deg"
-        //
-        // Convert it to a CSS string using the `toString()` and `toString(true)` (for WebKit)
-        // functions.
-        //
-        //     t.toString()         //=> "rotate(90deg) scale(4,4)"
-        //     t.toString(true)     //=> "rotate(90deg) scale3d(4,4,0)" (WebKit version)
-        //
         function Transform(str) {
             if (typeof str === 'string') {
                 this.parse(str);
@@ -90,18 +70,19 @@ define(
             return this;
         }
 
+        // Transform的prototype
         Transform.prototype = {
             //  ('scale', '2,4') => ('scale', '2', '4');
             setFromString: function (prop, val) {
-                var args = (typeof val === 'string') 
+                var args = (typeof val === 'string')
                     ? val.split(',')
-                    : (val.constructor === Array) ? val : [ val ];
+                    : (val.constructor === Array) ? val : [val];
 
                 args.unshift(prop);
                 Transform.prototype.set.apply(this, args);
             },
 
-            set: function(prop) {
+            set: function (prop) {
                 var args = Array.prototype.slice.apply(arguments, [1]);
                 if (this.setter[prop]) {
                     this.setter[prop].apply(this, args);
@@ -111,12 +92,15 @@ define(
                 }
             },
 
-            get: function(prop) {
-              if (this.getter[prop]) {
-                return this.getter[prop].apply(this);
-              } else {
-                return this[prop] || 0;
-              }
+            get: function (prop) {
+                var result;
+                if (this.getter[prop]) {
+                    result = this.getter[prop].apply(this);
+                }
+                else {
+                    result = this[prop] || 0;
+                }
+                return result;
             },
 
             setter: {
@@ -127,15 +111,15 @@ define(
                 // .css({ rotate: "30deg" })
                 // .css({ rotate: "30deg" })
                 //
-                rotate: function(theta) {
+                rotate: function (theta) {
                     this.rotate = util.unit(theta, 'deg');
                 },
 
-                rotateX: function(theta) {
+                rotateX: function (theta) {
                     this.rotateX = util.unit(theta, 'deg');
                 },
 
-                rotateY: function(theta) {
+                rotateY: function (theta) {
                     this.rotateY = util.unit(theta, 'deg');
                 },
 
@@ -145,8 +129,10 @@ define(
                 // .css({ scale: '3,2' })  //=> "scale(3,2)"
                 //
                 scale: function (x, y) {
-                    if (y === undefined) { y = x; }
-                    this.scale = x + "," + y;
+                    if (y === undefined) {
+                        y = x;
+                    }
+                    this.scale = x + ',' + y;
                 },
 
                 // ### skewX + skewY
@@ -159,15 +145,15 @@ define(
                 },
 
                 // ### perspectvie
-                perspective: function(dist) {
+                perspective: function (dist) {
                     this.perspective = util.unit(dist, 'px');
                 },
 
                 // x / y
                 // Translations. Notice how this keeps the other value.
                 //
-                // .css({ x: 4 })       //=> "translate(4px, 0)"
-                // .css({ y: 10 })      //=> "translate(4px, 10px)"
+                // .css({x: 4})       //=> "translate(4px, 0)"
+                // .css({y: 10})      //=> "translate(4px, 10px)"
                 //
                 x: function (x) {
                     this.set('translate', x, null);
@@ -180,7 +166,7 @@ define(
                 // translate
                 // Notice how this keeps the other value.
                 //
-                // .css({ translate: '2, 5' })    //=> "translate(2px, 5px)"
+                // .css({translate: '2, 5'})    //=> "translate(2px, 5px)"
                 //
                 translate: function (x, y) {
                     if (this._translateX === undefined) {
@@ -197,7 +183,7 @@ define(
                         this._translateY = util.unit(y, 'px');
                     }
 
-                    this.translate = this._translateX + "," + this._translateY;
+                    this.translate = this._translateX + ',' + this._translateY;
                 }
             },
 
@@ -211,7 +197,7 @@ define(
                 },
 
                 scale: function () {
-                    var s = (this.scale || "1,1").split(',');
+                    var s = (this.scale || '1,1').split(',');
                     if (s[0]) {
                         s[0] = parseFloat(s[0]);
                     }
@@ -224,7 +210,7 @@ define(
                 },
 
                 rotate3d: function () {
-                    var s = (this.rotate3d || "0,0,0,0deg").split(',');
+                    var s = (this.rotate3d || '0,0,0,0deg').split(',');
                     for (var i = 0; i <= 3; ++i) {
                         if (s[i]) {
                             s[i] = parseFloat(s[i]);
@@ -282,7 +268,7 @@ define(
             }
         };
 
-        css.cssHooks['x'] = {
+        css.cssHooks.x = {
             get: function (elem) {
                 return css.style(elem, 'transit:transform');
             },
@@ -295,20 +281,20 @@ define(
             }
         };
 
-        css.cssHooks['filter'] = {
-            get: function(elem) {
+        css.cssHooks.filter = {
+            get: function (elem) {
                 return elem.style[map.support.filter];
             },
-            set: function(elem, value) {
+            set: function (elem, value) {
                 elem.style[map.support.filter] = value;
             }
         };
 
         css.cssHooks.transformOrigin = {
-            get: function(elem) {
+            get: function (elem) {
                 return elem.style[map.support.transformOrigin];
             },
-            set: function(elem, value) {
+            set: function (elem, value) {
                 elem.style[map.support.transformOrigin] = value;
             }
         };
@@ -325,7 +311,7 @@ define(
             }
         };
 
-        // 单个CSS属性变换        
+        // 单个CSS属性变换
         css.style = function (elem, name, value) {
             if (!elem || elem.nodeType === 3 || elem.nodeType === 8 || !elem.style) {
                 return;
@@ -343,7 +329,7 @@ define(
 
             var ret;
             var type;
-            var origName = util.camelCase( name );
+            var origName = util.camelCase(name);
             var style = elem.style;
             name = vendorPropName(style, origName);
             var hooks = css.cssHooks[name] || css.cssHooks[origName];
@@ -351,12 +337,12 @@ define(
             if (value !== undefined) {
                 type = typeof value;
 
-                if (type === 'string' && (ret = rrelNum.exec( value ))) {
-                    value = ( ret[1] + 1 ) * ret[2] + parseFloat( jQuery.css(elem, name) );
+                if (type === 'string' && (ret = rrelNum.exec(value))) {
+                    value = (ret[1] + 1) * ret[2] + parseFloat(jQuery.css(elem, name));
                     type = 'number';
                 }
 
-                if (value == null || value !== value) {
+                if (!value) { // value == null
                     return;
                 }
 
@@ -364,16 +350,16 @@ define(
                     value += 'px';
                 }
 
-                if (!map.support.clearCloneStyle && value === "" && name.indexOf( "background" ) === 0) {
-                    style[name] = "inherit";
+                if (!map.support.clearCloneStyle && value === '' && name.indexOf('background') === 0) {
+                    style[name] = 'inherit';
                 }
 
-                if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined ) {
+                if (!hooks || !('set' in hooks) || (value = hooks.set(elem, value)) !== undefined) {
                     style[name] = value;
                 }
             }
             else {
-                if ( hooks && 'get' in hooks && (ret = hooks.get(elem, false)) !== undefined ) {
+                if (hooks && 'get' in hooks && (ret = hooks.get(elem, false)) !== undefined) {
                     return ret;
                 }
 
@@ -383,9 +369,9 @@ define(
 
         };
 
-        var cssPrefixes = [ "Webkit", "O", "Moz", "ms" ];
+        var cssPrefixes = ['Webkit', 'O', 'Moz', 'ms'];
         var pnum = (/[+-]?(?:\d*\.|)\d+(?:[eE][+-]?\d+|)/).source;
-        var rrelNum = new RegExp( "^([+-])=(" + pnum + ")", "i" );
+        var rrelNum = new RegExp('^([+-])=(' + pnum + ')', 'i');
 
         // form jQuery
         // 获取属性值
@@ -396,13 +382,13 @@ define(
             }
 
             // Check for vendor prefixed names
-            var capName = name[0].toUpperCase() + name.slice(1),
-                origName = name,
-                i = cssPrefixes.length;
+            var capName = name[0].toUpperCase() + name.slice(1);
+            var origName = name;
+            var i = cssPrefixes.length;
 
-            while ( i-- ) {
-                name = cssPrefixes[ i ] + capName;
-                if ( name in style ) {
+            while (i--) {
+                name = cssPrefixes[i] + capName;
+                if (name in style) {
                     return name;
                 }
             }

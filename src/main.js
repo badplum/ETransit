@@ -47,10 +47,11 @@ define(
          * 获取transition属性的字符串
          * Example: getTransition({x: '100px', y: '100px'}, 100, 'linear', 0) 得到结果
          *          'transform 100ms linear, transform 100ms linear'
-         * @param  {Object} properties 需要变换的CSS属性
-         * @param  {number|string} duration 持续时间
-         * @param  {string} easing easing的值
-         * @param  {number|string} delay delay时间
+         *
+         * @param {Object} properties 需要变换的CSS属性
+         * @param {number|string} duration 持续时间
+         * @param {string} easing easing的值
+         * @param {number|string} delay delay时间
          * @return {string} transition属性的字符串
          */
         function getTransition(properties, duration, easing, delay) {
@@ -86,6 +87,7 @@ define(
         /**
          * 从用户写的属性，转换到浏览器要执行的的CSS属性
          * 例如 x -> transform
+         *
          * @param {Object} props 需要转换的属性
          * @return {Array} 返回数组
          */
@@ -116,6 +118,7 @@ define(
 
         /**
          * 注册CSSHOOK
+         *
          * @param {string} prop cssHook的名字
          * @param {boolean} isPixels 是不是需要'px'后缀
          */
@@ -144,10 +147,10 @@ define(
         }
 
         /**
-         * @class TransitObject
-         *
+         * TransitObject
          * Transit类 每个变换都是基于这个类
          *
+         * @param {Element|string} elem 待使用动画的元素
          * @constructor
          */
         function TransitObject(elem) {
@@ -168,6 +171,7 @@ define(
         /**
          * 恢复初始状态
          * 恢复包括所有动画过程中，用别的方法额外设置的style
+         *
          * @param {Function} callback 完成后的回掉函数
          * @return {Object} this
          */
@@ -184,6 +188,7 @@ define(
 
         /**
          * 恢复初始状态，仅恢复ETransit改变的值
+         *
          * @param {Function} callback 完成后的回掉函数
          * @param {string} isNow 是否直接进行
          * @return {Object} this
@@ -205,6 +210,7 @@ define(
         /**
          * 恢复初始状态
          * 仅恢复ETransit改变的值
+         *
          * @param {Function} callback 完成后的回掉函数
          */
         TransitObject.prototype.restoreNow = function (callback) {
@@ -213,6 +219,7 @@ define(
 
         /**
          * 进入队列并按照队列顺序执行
+         *
          * @param {Function} fn 待执行的函数
          */
         TransitObject.prototype.deferredRun = function (fn) {
@@ -224,6 +231,7 @@ define(
 
         /**
          * 每个步骤前的准备工作。存储一些基本状态。
+         *
          * @param {string} type 变换的类型
          */
         TransitObject.prototype.run = function (type) {
@@ -239,6 +247,7 @@ define(
 
         /**
          * 循环
+         *
          * @param {number} times 循环次数。
          * @param {number} step 需要循环的步骤个数，从最后一次开始倒数，默认为全部，为-1。
          * @return {Object} this
@@ -285,6 +294,7 @@ define(
 
         /**
          * 获取transitioin进度百分比，已小数形式表示
+         *
          * @return {number} 进度
          */
         TransitObject.prototype.getProgress = function () {
@@ -296,6 +306,7 @@ define(
 
         /**
          * 暂停
+         *
          * @return {Object} this
          */
         TransitObject.prototype.pause = function () {
@@ -312,7 +323,7 @@ define(
             // 有的浏览器cssText被hasOwnProperty过滤
             if (!this.pauseStyle.cssText) {
                 this.pauseStyle.cssText = this.elem.style.cssText;
-            } 
+            }
 
             var startTime = this.timeLine.resumeStartTime || this.timeLine.startTime;
             var pauseTime = +new Date();
@@ -360,6 +371,7 @@ define(
 
         /**
          * 是不是transform类型
+         *
          * @param {string} name 待检测的类型
          * @return {boolean} 是不是transform类型
          */
@@ -369,6 +381,7 @@ define(
 
         /**
          * 继续动画
+         *
          * @return {Object} this
          */
         TransitObject.prototype.resume = function () {
@@ -394,6 +407,7 @@ define(
         /**
          * 获取实际的easing。
          * 例如暂停后再继续，那么easing要做相应的调整才行
+         *
          * @param {string} value 之前的easing
          * @return {string} 新的easing
          */
@@ -415,6 +429,7 @@ define(
         /**
          * 计算新的bezier。
          * Based on Bez http://github.com/rdallasgray/bez
+         *
          * @param {Array} oldBezier 之前的bezier
          * @param {number} time 已经运行的时间
          * @return {Array} 新的bezier
@@ -462,7 +477,7 @@ define(
             var det = a * d - b * c;
 
             if (det === 0) {
-                console.log('New Bezier FAIL: Det == 0');
+                // console.log('New Bezier FAIL: Det == 0');
                 return oldBezier;
             }
 
@@ -536,6 +551,7 @@ define(
 
         /**
          * 获取当前浏览器应该怎么写property
+         *
          * @param {Object} style style
          * @param {string} name 要转换的property
          * @return {Array} 转换后的值
@@ -563,6 +579,7 @@ define(
         /**
          * 反转
          * 按照上一步的时间和easing对动画进行反转
+         *
          * @param {number} step 回退的指令个数
          * @param {Function} callback 回掉
          * @param {string} type 可以扩展的各种类型。而且只要有值都不用queue来。
@@ -615,6 +632,7 @@ define(
 
         /**
          * 绑定callback
+         *
          * @param {number|string} duration 持续时间
          * @param {Function} nextFn 队列中要执行的下一个函数
          * @param {Function} callback 真正的回调函数
@@ -658,6 +676,7 @@ define(
 
         /**
          * 初始化相关工作
+         *
          * @param {Object} properties 待变换的属性
          * @param {string} easing esasing
          * @param {string} type action类型
@@ -689,6 +708,7 @@ define(
 
         /**
          * 计算当前的各种属性
+         *
          * @param {Object} target 元素
          * @param {Object} properties 当前要撸的各种属性
          * @param {Object} data 存属性的对象
@@ -717,6 +737,7 @@ define(
 
         /**
          * 获取TransformValue
+         *
          * @param  {element} target 元素
          * @param  {string} name 属性名
          * @return {string|number} 得到的值
@@ -733,6 +754,7 @@ define(
 
         /**
          * 基本的变换函数
+         *
          * @param {Object} properties 待变换的属性
          * @param {string|number} duration 变换时间，单位ms
          * @param {string} easing easing
@@ -885,6 +907,7 @@ define(
 
         /**
          * 把函数塞进队列
+         *
          * @param {Function} fn 塞进队列的函数
          */
         TransitObject.prototype.queneRun = function (fn) {
@@ -896,6 +919,7 @@ define(
 
         /**
          * 根据给定的元素来生成TransitObject
+         *
          * @param {string|Object} elem 指定的元素
          * @return {Object} TransitObject
          */
